@@ -81,7 +81,7 @@ $: paginatedAdlists = filteredAdlists.slice(
 			const res = await fetch('/api/lists', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify([listPayload])
+				body: JSON.stringify(listPayload)
 			});
 
 			if (res.ok) {
