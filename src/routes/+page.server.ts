@@ -3,7 +3,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 
 export const load: ServerLoad = async ({ getClientAddress }: RequestEvent) => {
 	//Start up get client IP address
-	let clientIP = getClientAddress(); //should be the client address but because loopback imma set it
+	let clientIP = getClientAddress();
 	console.log('Client IP:', clientIP);
 
 	if (clientIP.startsWith('::ffff:')) {
@@ -31,6 +31,7 @@ export const load: ServerLoad = async ({ getClientAddress }: RequestEvent) => {
 
 		const networkDevicesData = await response.json();
 		let clientMAC: string | null = null;
+		let clientExists: boolean = false;
 		const devices = networkDevicesData.devices || [];
 
 		//Match client ip addess to device mac address WE WANT THE MAC ADDRESS INCASE OF IP CHANGES
@@ -68,8 +69,10 @@ export const load: ServerLoad = async ({ getClientAddress }: RequestEvent) => {
 						if (matchingClient) {
 							clientGroups = matchingClient.groups || null;
 							console.log('Client group IDs:', clientGroups); //list their group
+							clientExists = true;
 						} else {
 							console.log('Client MAC address not found in the client list.');
+							clientExists = false;
 						}
 					} else {
 						console.error('Unexpected format for client list:', clientsData);
@@ -116,13 +119,16 @@ export const load: ServerLoad = async ({ getClientAddress }: RequestEvent) => {
 						console.error('Failed to extract new group ID from creation response.');
 					} else {
 						// Now assign the client to group 0 and newGroupId
-						const setGroupRes = await fetch(`http://192.168.0.200/api/clients/${clientMAC}`, {
-							method: 'PUT',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({
-								groups: [0, newGroupId]
-							})
-						});
+						const setGroupRes = await fetch(
+							`http://192.168.0.200/api/clients/${clientMAC.toUpperCase()}`,
+							{
+								method: 'PUT',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify({
+									groups: [0, newGroupId]
+								})
+							}
+						);
 
 						if (!setGroupRes.ok) {
 							const err = await setGroupRes.text();
@@ -159,6 +165,7 @@ export const load: ServerLoad = async ({ getClientAddress }: RequestEvent) => {
 			clientMAC,
 			clientGroups,
 			clientGroup,
+			clientExists,
 			error: null
 		};
 	} catch (error) {

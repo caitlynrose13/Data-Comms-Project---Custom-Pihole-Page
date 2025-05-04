@@ -42,16 +42,14 @@ $: paginatedAdlists = filteredAdlists.slice(
 );
 
 	// Fetch adlists from the server
-	async function fetchAdlists() {
+	async function fetchAdlists(clientGroup : PageData['clientGroup']) {
 		try {
 			const res = await fetch('/api/lists');
 			if (res.ok) {
 				const data = await res.json();
 				adlists = data.lists;
-
 				//Filter Lists for client group only
-				adlists= adlists.filter(list => list.groups.includes(data.clientGroup));
-
+				adlists = adlists.filter(list => list.groups.includes(Number(clientGroup)))	;	
 			} else {
 				console.error('Failed to fetch adlists:', res.statusText);
 			}
@@ -60,7 +58,13 @@ $: paginatedAdlists = filteredAdlists.slice(
 		}
 	}
 
-	onMount(fetchAdlists);
+	//update the onmount to have an if - to prevent undefined client group early execution
+	onMount(() => {
+    if (data.clientGroup) {
+		console.log("Client group ", data.clientGroup)
+      fetchAdlists(data.clientGroup);
+    }
+  });
 
 	// Add a new adlist entry
 	async function handleAdd(type: 'allow' | 'block') {
@@ -81,11 +85,11 @@ $: paginatedAdlists = filteredAdlists.slice(
 			const res = await fetch('/api/lists', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify([listPayload])
+				body: JSON.stringify(listPayload)
 			});
 
 			if (res.ok) {
-				await fetchAdlists(); // Refresh list after adding
+				await fetchAdlists(data.clientGroup); // Refresh list after adding
 				newAddress = '';
 				newComment = '';
 			} else {
@@ -110,7 +114,7 @@ $: paginatedAdlists = filteredAdlists.slice(
 			});
 
 			if (res.ok) {
-				await fetchAdlists(); // Refresh list after deletion
+				await fetchAdlists(data.clientGroup); // Refresh list after deletion
 			} else {
 				console.error('Failed to delete list:', await res.text());
 			}
@@ -221,3 +225,4 @@ $: paginatedAdlists = filteredAdlists.slice(
 	<span>Page {currentPage} of {totalPages}</span>
 	<button on:click={() => currentPage++} disabled={currentPage === totalPages}>Next</button>
 </div>
+
