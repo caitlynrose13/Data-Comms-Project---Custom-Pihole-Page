@@ -89,6 +89,7 @@ $: paginatedAdlists = filteredAdlists.slice(
 			});
 
 			if (res.ok) {
+				await triggerPiholeUpdate();
 				await fetchAdlists(data.clientGroup); // Refresh list after adding
 				newAddress = '';
 				newComment = '';
@@ -114,6 +115,7 @@ $: paginatedAdlists = filteredAdlists.slice(
 			});
 
 			if (res.ok) {
+				await triggerPiholeUpdate();
 				await fetchAdlists(data.clientGroup); // Refresh list after deletion
 			} else {
 				console.error('Failed to delete list:', await res.text());
@@ -122,6 +124,23 @@ $: paginatedAdlists = filteredAdlists.slice(
 			console.error('Error during delete:', err);
 		}
 	}
+
+	//update the gravity list on modficiation
+	async function triggerPiholeUpdate() {
+    try {
+        // Call to local backend to trigger Pi-hole update
+        const res = await fetch('/api/trigger-pihole-update', {
+            method: 'POST'
+        });
+
+        if (!res.ok) {
+            console.error('Failed to trigger Pi-hole update:', await res.text());
+        }
+    } catch (err) {
+        console.error('Error triggering Pi-hole update:', err);
+    }
+}
+
 </script>
 
 <style>
