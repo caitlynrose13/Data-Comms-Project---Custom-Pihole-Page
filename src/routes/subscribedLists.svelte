@@ -129,7 +129,7 @@ $: paginatedAdlists = filteredAdlists.slice(
 	async function triggerPiholeUpdate() {
     try {
         // Call to local backend to trigger Pi-hole update
-        const res = await fetch('/api/trigger-pihole-update', {
+        const res = await fetch('http://192.168.0.200:3001/api/trigger-pihole-update', {
             method: 'POST'
         });
 
