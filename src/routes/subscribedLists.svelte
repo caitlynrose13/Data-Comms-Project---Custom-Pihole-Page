@@ -16,6 +16,7 @@
 	};
 
 	import type { PageData } from './$types';
+	import Domains from "./domainLists.svelte";
 	import { onMount } from 'svelte';
 	export let data: PageData;
 
@@ -26,6 +27,10 @@
 
 	let currentPage = 1;
 	const itemsPerPage = 10;
+
+	let isLoading = false; // to show when loading update
+
+	let activeSection: 'lists' | 'domains' = 'lists'; //toggle to display either lists or domains
 
 // Filter based on search query
 $: filteredAdlists = adlists.filter((list) =>
@@ -89,7 +94,6 @@ $: paginatedAdlists = filteredAdlists.slice(
 			});
 
 			if (res.ok) {
-				await triggerPiholeUpdate();
 				await fetchAdlists(data.clientGroup); // Refresh list after adding
 				newAddress = '';
 				newComment = '';
@@ -115,7 +119,6 @@ $: paginatedAdlists = filteredAdlists.slice(
 			});
 
 			if (res.ok) {
-				await triggerPiholeUpdate();
 				await fetchAdlists(data.clientGroup); // Refresh list after deletion
 			} else {
 				console.error('Failed to delete list:', await res.text());
@@ -127,18 +130,21 @@ $: paginatedAdlists = filteredAdlists.slice(
 
 	//update the gravity list on modficiation
 	async function triggerPiholeUpdate() {
-    try {
-        // Call to local backend to trigger Pi-hole update
-        const res = await fetch('http://192.168.0.200:3001/api/trigger-pihole-update', {
-            method: 'POST'
-        });
+		isLoading = true;
+		isLoading = true;
+		try {
+			const res = await fetch('http://192.168.0.200:3001/api/trigger-pihole-update', {
+				method: 'POST'
+			});
 
-        if (!res.ok) {
-            console.error('Failed to trigger Pi-hole update:', await res.text());
-        }
-    } catch (err) {
-        console.error('Error triggering Pi-hole update:', err);
-    }
+			if (!res.ok) {
+				console.error('Failed to trigger Pi-hole update:', await res.text());
+			}
+		} catch (err) {
+			console.error('Error triggering Pi-hole update:', err);
+		} finally {
+			isLoading = false;
+		}	
 }
 
 </script>
@@ -154,7 +160,15 @@ $: paginatedAdlists = filteredAdlists.slice(
 
 </div>
 
-<!-- Domain Input -->
+<div class="section-toggle" style="margin-bottom: 1rem;">
+	<button class:active-tab={activeSection === 'lists'} on:click={() => activeSection = 'lists'}>Adlists</button>
+	<button class:active-tab={activeSection === 'domains'} on:click={() => activeSection = 'domains'}>Domains</button>
+  </div>
+
+
+<!-- Lists-->
+<!-- Address Input -->
+{#if activeSection === 'lists'}
 <div class="box" id="add-group">
 		<h2 class="box-title">List Configure</h2>
 
@@ -188,15 +202,18 @@ $: paginatedAdlists = filteredAdlists.slice(
 	</div>	
 				<button class="btn-remove" on:click={() => handleAdd('block')}>Add Blocklist</button>
 				<button class="btn-add" on:click={() => handleAdd('allow')}>Add Allowlist</button>
-
+				<button class="btn-update" on:click={() => triggerPiholeUpdate()}>Update Changes To Come Into Effect </button>
 </div>
 
+<div style="font-size: 1.2rem; margin-top: 20px;">
+	Visit <a href="https://firebog.net/" target="_blank" rel="noopener noreferrer">Firebog</a> for useful blocklists and resources.
+  </div>
 <!-- Allow user to search through domains -->
 <div class="form-group">
 	<div class="page-header">
 
 	</div>
-	<label for="search">Search Domains:</label>
+	<label for="search">Search Lists:</label>
 	<input
 		id="search"
 		type="text"
@@ -206,6 +223,14 @@ $: paginatedAdlists = filteredAdlists.slice(
 		autocomplete="off"
 	/>
 </div>
+
+<!-- Loader -->
+{#if isLoading}
+	<div class="loading-indicator">
+		⏳ Updating Pi-hole... Please wait.
+	</div>
+{/if}
+
 <!-- Table -->
 <div class="box" id="lists-list">
 	<div class="box-header with-border">
@@ -216,7 +241,7 @@ $: paginatedAdlists = filteredAdlists.slice(
 		<table>
 			<thead>
 				<tr>
-					<th>Domain</th>
+					<th>Address</th>
 					<th>Type</th>
 					<th>Comment</th>
 					<th></th>
@@ -244,4 +269,10 @@ $: paginatedAdlists = filteredAdlists.slice(
 	<span>Page {currentPage} of {totalPages}</span>
 	<button on:click={() => currentPage++} disabled={currentPage === totalPages}>Next</button>
 </div>
+{/if}
+
+<!--Domains-->
+{#if activeSection === 'domains'}
+<Domains {data} />
+{/if}
 
