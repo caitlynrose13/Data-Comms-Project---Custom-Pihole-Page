@@ -53,8 +53,10 @@ $: paginatedAdlists = filteredAdlists.slice(
 			if (res.ok) {
 				const data = await res.json();
 				adlists = data.lists;
+				
 				//Filter Lists for client group only
-				adlists = adlists.filter(list => list.groups.includes(Number(clientGroup)))	;	
+				adlists = adlists.filter(list => list.groups.includes(Number(clientGroup)))	;
+				console.log(adlists)	
 			} else {
 				console.error('Failed to fetch adlists:', res.statusText);
 			}
@@ -75,6 +77,7 @@ $: paginatedAdlists = filteredAdlists.slice(
 	async function handleAdd(type: 'allow' | 'block') {
 		if (!newAddress || !data.clientGroup) {
 			alert('Missing domain or group info.');
+			console.log(data.clientGroup)
 			return;
 		}
 
@@ -86,6 +89,7 @@ $: paginatedAdlists = filteredAdlists.slice(
 			enabled: true
 		};
 
+		console.log(listPayload);
 		try {
 			const res = await fetch('/api/lists', {
 				method: 'POST',

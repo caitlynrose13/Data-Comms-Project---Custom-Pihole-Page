@@ -68,7 +68,7 @@ async function handleAddDomain(type: 'allow' | 'deny') {
 	};
 
 	try {
-		const res = await fetch(`/api/domains/${type}/exact`, {
+		const res = await fetch(`/api/domains/${type}/regex`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
